@@ -1,73 +1,83 @@
 namespace Day05;
+
 public class GardenerHelper
 {
     private readonly List<long> _seeds;
-    private readonly CategoryMap _seedToSoilMap;
-    private readonly CategoryMap _soilToFertilizerMap;
-    private readonly CategoryMap _fertilizerToWaterMap;
-    private readonly CategoryMap _waterToLightMap;
-    private readonly CategoryMap _lightToTemperatureMap;
-    private readonly CategoryMap _temperatureToHumidityMap;
-    private readonly CategoryMap _humidityToLocationMap;
+    private readonly List<CategoryMap> _allMaps;
 
     public GardenerHelper(
         List<long> seeds,
-        CategoryMap seedToSoilMap,
-        CategoryMap soilToFertilizerMap,
-        CategoryMap fertilizerToWaterMap,
-        CategoryMap waterToLightMap,
-        CategoryMap lightToTemperatureMap,
-        CategoryMap temperatureToHumidityMap,
-        CategoryMap humidityToLocationMap)
+        List<CategoryMap> allMaps)
     {
         _seeds = seeds;
-        _seedToSoilMap = seedToSoilMap;
-        _soilToFertilizerMap = soilToFertilizerMap;
-        _fertilizerToWaterMap = fertilizerToWaterMap;
-        _waterToLightMap = waterToLightMap;
-        _lightToTemperatureMap = lightToTemperatureMap;
-        _temperatureToHumidityMap = temperatureToHumidityMap;
-        _humidityToLocationMap = humidityToLocationMap;
+        _allMaps = allMaps;
     }
 
     public long FindLowestLocation()
     {
-        var locations = (from seed in _seeds
-            select _seedToSoilMap.GetMappedValue(seed)
-            into soil
-            select _soilToFertilizerMap.GetMappedValue(soil)
-            into fertilizer
-            select _fertilizerToWaterMap.GetMappedValue(fertilizer)
-            into water
-            select _waterToLightMap.GetMappedValue(water)
-            into light
-            select _lightToTemperatureMap.GetMappedValue(light)
-            into temperature
-            select _temperatureToHumidityMap.GetMappedValue(temperature)
-            into humidity
-            select _humidityToLocationMap.GetMappedValue(humidity)).ToList();
-
-        return locations.Min();
+        return _seeds.Select(seed => _allMaps.Aggregate(seed, (current, map) => map.GetAdjustedValue(current)))
+            .Prepend(long.MaxValue).Min();
     }
-    
+
     public long FindLowestLocationFromRanges()
     {
-        _seeds.Order();
-        var values = _seeds.AsParallel().Select(GetLocationForSeed).ToList();
-        var minValue = values.Min();
-        return minValue;
+        var ranges = new List<(long from, long to)>();
+        for (var i = 0; i < _seeds.Count; i += 2)
+        {
+            var start = _seeds[i];
+            var end = start + _seeds[i + 1] - 1;
+            ranges.Add((start, end));
+        }
+
+        foreach (var map in _allMaps)
+        {
+            var newRanges = new List<(long from, long to)>();
+            foreach (var range in ranges)
+            {
+                var currentStart = range.from;
+                var currentEnd = range.to;
+
+                foreach (var (from, to, adjustment) in map.GetMappings())
+                {
+                    if (currentEnd < from)
+                    {
+                        // The current range is entirely before the mapping range
+                        newRanges.Add((currentStart, currentEnd));
+                        break;
+                    }
+
+                    if (currentStart > to)
+                    {
+                        // The current range is entirely after the mapping range, continue to next mapping
+                        continue;
+                    }
+
+                    // The current range intersects with the mapping range
+                    if (currentStart < from)
+                    {
+                        newRanges.Add((currentStart, from - 1));
+                    }
+
+                    var newStart = Math.Max(currentStart, from) + adjustment;
+                    var newEnd = Math.Min(currentEnd, to) + adjustment;
+                    newRanges.Add((newStart, newEnd));
+                    currentStart = to + 1;
+
+                    if (currentStart > currentEnd)
+                    {
+                        break;
+                    }
+                }
+
+                if (currentStart <= currentEnd)
+                {
+                    newRanges.Add((currentStart, currentEnd));
+                }
+            }
+
+            ranges = newRanges;
+        }
+
+        return ranges.Any() ? ranges.Min(r => r.from) : long.MaxValue;
     }
-
-
-    private long GetLocationForSeed(long seed)
-    {
-        var soil = _seedToSoilMap.GetMappedValue(seed);
-        var fertilizer = _soilToFertilizerMap.GetMappedValue(soil);
-        var water = _fertilizerToWaterMap.GetMappedValue(fertilizer);
-        var light = _waterToLightMap.GetMappedValue(water);
-        var temperature = _lightToTemperatureMap.GetMappedValue(light);
-        var humidity = _temperatureToHumidityMap.GetMappedValue(temperature);
-        return _humidityToLocationMap.GetMappedValue(humidity);
-    }
-
-}   
+}

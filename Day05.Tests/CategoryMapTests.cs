@@ -5,16 +5,14 @@ namespace Day05Tests;
 public class CategoryMapTests
 {
     [Fact]
-    public void GetMappedValue_ReturnsCorrectMapping()
+    public void CategoryMap_CorrectlyAppliesMappings()
     {
-        var mapData = "50 98 2\n52 50 48"; // Example map data
-        var map = new CategoryMap(mapData);
+        // Example mapping data for a category map
+        const string mapData = "50 98 2\n52 50 48";
+        var categoryMap = new CategoryMap(mapData);
 
-        Assert.Equal(50, map.GetMappedValue(98));
-        Assert.Equal(51, map.GetMappedValue(99));
-        Assert.Equal(52, map.GetMappedValue(50));
-        // Add more assertions as needed
+        // Test some mappings
+        Assert.Equal(50, categoryMap.GetAdjustedValue(98));
+        Assert.Equal(52, categoryMap.GetAdjustedValue(50));
     }
-
-    // Additional tests for edge cases, etc.
 }

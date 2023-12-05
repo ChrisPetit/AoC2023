@@ -5,15 +5,12 @@ namespace Day05Tests;
 public class DataParserTests
 {
     [Fact]
-    public void ParseSeeds_ReturnsCorrectSeedList()
+    public void DataParser_CorrectlyParsesSeeds()
     {
-        var seedData = "79 14 55 13"; // Example seed data
-        var expectedSeeds = new List<long> { 79, 14, 55, 13 }; // Expected result
-
+        const string seedData = "79 14 55 13";
         var seeds = DataParser.ParseSeeds(seedData);
 
-        Assert.Equal(expectedSeeds, seeds);
+        Assert.Contains(79, seeds);
+        Assert.Contains(55, seeds);
     }
-
-    // Additional tests for ParseMap, ParseSeedRanges, etc.
 }

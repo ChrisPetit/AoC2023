@@ -1,52 +1,41 @@
-namespace Day05
+namespace Day05;
+
+public class CategoryMap
 {
-    public class CategoryMap
+    private readonly List<(long from, long to, long adjustment)> _mappings;
+
+    public CategoryMap(string mapData)
     {
-        private class RangeMapping
+        _mappings = new List<(long from, long to, long adjustment)>();
+        var lines = mapData.Split('\n');
+        foreach (var line in lines)
         {
-            public long SourceStart { get; init; }
-            public long DestinationStart { get; init; }
-            public long RangeLength { get; init; }
-        }
-
-        private readonly List<RangeMapping> _mappings;
-
-        public CategoryMap(string mapData)
-        {
-            _mappings = new List<RangeMapping>();
-
-            var lines = mapData.Split('\n');
-            foreach (var line in lines)
+            var parts = line.Split(' ').Where(s => long.TryParse(s, out _)).ToArray();
+            if (parts.Length == 3)
             {
-                var parts = line.Split(' ').Where(s => long.TryParse(s, out _)).ToList();
-                if (parts.Count == 3)
-                {
-                    _mappings.Add(new RangeMapping
-                    {
-                        DestinationStart = long.Parse(parts[0]),
-                        SourceStart = long.Parse(parts[1]),
-                        RangeLength = long.Parse(parts[2])
-                    });
-                }
+                _mappings.Add((long.Parse(parts[1]), long.Parse(parts[1]) + long.Parse(parts[2]) - 1,
+                    long.Parse(parts[0]) - long.Parse(parts[1])));
             }
         }
 
-        public long GetMappedValue(long source)
+        // Sort the mappings based on the 'from' value
+        _mappings = _mappings.OrderBy(x => x.from).ToList();
+    }
+
+    public long GetAdjustedValue(long value)
+    {
+        foreach (var (from, to, adjustment) in _mappings)
         {
-            var lockObject = new object(); // Create a lock object for thread safety
-            var mappedValue = source; // Initialize the mapped value
-
-            Parallel.ForEach(_mappings, (mapping, state) =>
+            if (value >= from && value <= to)
             {
-                if (source < mapping.SourceStart || source >= mapping.SourceStart + mapping.RangeLength) return;
-                lock (lockObject) // Lock the critical section to ensure thread safety
-                {
-                    mappedValue = mapping.DestinationStart + (source - mapping.SourceStart);
-                    state.Break(); // Exit the loop once a mapping is found
-                }
-            });
-
-            return mappedValue; // Return the mapped value
+                return value + adjustment;
+            }
         }
+        return value;
+    }
+    
+    public List<(long from, long to, long adjustment)> GetMappings()
+    {
+        return _mappings;
     }
 }
