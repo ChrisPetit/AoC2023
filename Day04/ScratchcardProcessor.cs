@@ -4,38 +4,29 @@ public static class ScratchcardProcessor
     public static int ProcessCards(List<(List<int> winningNumbers, List<int> playerNumbers)> cards)
     {
         var totalCards = 0;
-        var cardQueue = new List<int>(); // Queue to manage card processing
+        var toProcess = new Queue<int>(); // Queue for cards to be processed
 
+        // Initial queueing of all cards
         for (var i = 0; i < cards.Count; i++)
         {
-            var matches = cards[i].winningNumbers.Count(number => cards[i].playerNumbers.Contains(number));
-            
-            // Process the current card
+            toProcess.Enqueue(i);
+        }
+
+        while (toProcess.Count > 0)
+        {
+            var currentIndex = toProcess.Dequeue();
             totalCards++;
-            // For each match, add the next card to the queue
+
+            var currentCard = cards[currentIndex];
+            var matches = currentCard.winningNumbers.Intersect(currentCard.playerNumbers).Count();
+
+            // Queue additional cards based on matches
             for (var j = 1; j <= matches; j++)
             {
-                if (i + j < cards.Count)
+                var nextIndex = currentIndex + j;
+                if (nextIndex < cards.Count)
                 {
-                    cardQueue.Add(i + j);
-                }
-            }
-
-            // Process copies in the queue
-            while (cardQueue.Any())
-            {
-                var cardIndex = cardQueue[0];
-                cardQueue.RemoveAt(0);
-
-                matches = cards[cardIndex].winningNumbers.Count(number => cards[cardIndex].playerNumbers.Contains(number));
-                totalCards++; // Count the copy
-
-                for (var j = 1; j <= matches; j++)
-                {
-                    if (cardIndex + j < cards.Count)
-                    {
-                        cardQueue.Add(cardIndex + j);
-                    }
+                    toProcess.Enqueue(nextIndex);
                 }
             }
         }
@@ -43,4 +34,5 @@ public static class ScratchcardProcessor
         return totalCards;
     }
 }
+
 
