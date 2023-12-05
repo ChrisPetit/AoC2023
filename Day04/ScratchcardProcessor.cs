@@ -1,5 +1,5 @@
 namespace Day04;
-public class ScratchcardProcessor
+public static class ScratchcardProcessor
 {
     public static int ProcessCards(List<(List<int> winningNumbers, List<int> playerNumbers)> cards)
     {

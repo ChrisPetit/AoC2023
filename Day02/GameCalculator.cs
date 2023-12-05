@@ -2,7 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace Day02;
 
-public class GameCalculator
+public static class GameCalculator
 {
     public static int CalculateTotalPower(List<string> gameRecords)
     {

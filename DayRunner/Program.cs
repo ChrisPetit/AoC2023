@@ -8,4 +8,7 @@ Console.WriteLine("Day 03");
 Day03.Runner.RunDay03();
 
 Console.WriteLine("Day 04");
-Day04.Runner.RunDay04();
+//Day04.Runner.RunDay04();
+
+Console.WriteLine("Day 05");
+Day05.Runner.RunDay05();

@@ -1,6 +1,6 @@
 namespace Day04;
 
-public class ScratchcardParser
+public static class ScratchcardParser
 {
     public static (List<int> winningNumbers, List<int> playerNumbers) ParseCard(string cardData)
     {

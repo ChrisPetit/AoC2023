@@ -1,6 +1,6 @@
 namespace Day03;
 
-public class EngineSchematicGearRatioAnalyzer
+public static class EngineSchematicGearRatioAnalyzer
 {
     public static int SumOfGearRatios(string schematic)
     {

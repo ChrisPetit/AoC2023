@@ -1,6 +1,6 @@
 namespace Day04;
 
-public class ScratchcardCalculator
+public static class ScratchcardCalculator
 {
     public static int CalculatePoints(List<int> winningNumbers, List<int> playerNumbers)
     {

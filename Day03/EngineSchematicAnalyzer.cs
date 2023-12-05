@@ -1,6 +1,6 @@
 namespace Day03;
 
-public class EngineSchematicAnalyzer
+public static class EngineSchematicAnalyzer
 {
     public static int SumOfPartNumbers(string schematic)
     {
