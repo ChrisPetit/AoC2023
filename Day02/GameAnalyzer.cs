@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Day02;
 
-public class GameAnalyzer
+public static class GameAnalyzer
 {
     public static int CalculatePossibleGames(List<string> gameRecords, int redCubes, int greenCubes, int blueCubes)
     {

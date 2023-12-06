@@ -2,7 +2,7 @@
 
 namespace Day01;
 
-public class Processor
+public partial class Processor
 {
     public static void RunDay01()
     {
@@ -28,9 +28,9 @@ public class Processor
     public static int CalculateNewCalibrationValue(string input)
     {
         // select either the first digit or the first spelled out number
-        var number1 = Regex.Match(input, @"\d|one|two|three|four|five|six|seven|eight|nine", RegexOptions.IgnoreCase).Value;
+        var number1 = NumbersRegex().Match(input).Value;
         var reversedInput = new string(input.Reverse().ToArray());
-        var number2 = Regex.Match(reversedInput, @"\d|eno|owt|eerht|ruof|evif|xis|neves|thgie|enin", RegexOptions.IgnoreCase).Value;
+        var number2 = ReversedNumbersRegex().Match(reversedInput).Value;
         
         var a = GetNumber(number1) + GetNumber(number2).ToString();
 
@@ -53,4 +53,9 @@ public class Processor
         }
         return wordsToNumbers.TryGetValue(input, out number) ? number : 0;
     }
+
+    [GeneratedRegex("\\d|one|two|three|four|five|six|seven|eight|nine", RegexOptions.IgnoreCase, "nl-NL")]
+    private static partial Regex NumbersRegex();
+    [GeneratedRegex("\\d|eno|owt|eerht|ruof|evif|xis|neves|thgie|enin", RegexOptions.IgnoreCase, "nl-NL")]
+    private static partial Regex ReversedNumbersRegex();
 }

@@ -2,10 +2,10 @@ namespace Day04;
 
 public static class ScratchcardCalculator
 {
-    public static int CalculatePoints(List<int> winningNumbers, List<int> playerNumbers)
+    public static int CalculatePoints(IEnumerable<int> winningNumbers, List<int> playerNumbers)
     {
         var points = 0;
-        var matches = winningNumbers.Count(number => playerNumbers.Contains(number));
+        var matches = winningNumbers.Count(playerNumbers.Contains);
 
         if (matches > 0)
         {

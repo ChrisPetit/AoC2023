@@ -24,7 +24,7 @@ public static class EngineSchematicAnalyzer
         return sum;
     }
 
-    private static (int number, bool isAdjacent) ExtractNumberAndCheckAdjacency(string[] lines, int row, int col, bool[,] visited)
+    private static (int number, bool isAdjacent) ExtractNumberAndCheckAdjacency(IReadOnlyList<string> lines, int row, int col, bool[,] visited)
     {
         var number = 0;
         var isAdjacent = false;

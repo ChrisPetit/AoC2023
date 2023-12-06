@@ -15,7 +15,10 @@ public class GardenerHelper
 
     public long FindLowestLocation()
     {
-        return _seeds.Select(seed => _allMaps.Aggregate(seed, (current, map) => map.GetAdjustedValue(current)))
+        return _seeds
+            .Select(seed => _allMaps
+                .Aggregate(seed, (current, map) => map
+                    .GetAdjustedValue(current)))
             .Prepend(long.MaxValue).Min();
     }
 
