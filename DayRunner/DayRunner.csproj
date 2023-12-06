@@ -13,6 +13,7 @@
       <ProjectReference Include="..\Day03\Day03.csproj" />
       <ProjectReference Include="..\Day04\Day04.csproj" />
       <ProjectReference Include="..\Day05\Day05.csproj" />
+      <ProjectReference Include="..\Day06\Day06.csproj" />
     </ItemGroup>
 
     <ItemGroup>
@@ -29,6 +30,9 @@
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
       <None Update="input\Day05.txt">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="input\Day06.txt">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
