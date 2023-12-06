@@ -17,7 +17,7 @@ public static class BoatRace
         return waysToWin;
     }
 
-    public static long TotalWaysToWin(List<(int raceTime, int recordDistance)> races)
+    public static long TotalWaysToWin(IEnumerable<(int raceTime, int recordDistance)> races)
     {
         return races.Aggregate<(int raceTime, int recordDistance), long>(1,
             (current, race) => current * CalculateWaysToWin(race.raceTime, race.recordDistance));

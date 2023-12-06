@@ -17,7 +17,7 @@ public class EngineSchematicAnalyzerTests
                                  ".664.598..";
         
         var result = EngineSchematicAnalyzer.SumOfPartNumbers(schematic);
-        const int expected = 4361; // As per the example given
+        const int expected = 4361;
 
         Assert.Equal(expected, result);
     }

@@ -17,7 +17,7 @@ public class EngineSchematicGearRatioAnalyzerTests
                                  ".664.598..";
         
         var result = EngineSchematicGearRatioAnalyzer.SumOfGearRatios(schematic);
-        var expected = 467835; // As per your description
+        const int expected = 467835;
 
         Assert.Equal(expected, result);
     }

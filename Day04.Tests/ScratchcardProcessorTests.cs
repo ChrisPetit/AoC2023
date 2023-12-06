@@ -20,6 +20,6 @@ public class ScratchcardProcessorTests
         var totalCards = ScratchcardProcessor.ProcessCards(cards);
 
         // Assert
-        Assert.Equal(30, totalCards); // Expected total based on your example
+        Assert.Equal(30, totalCards);
     }
 }
