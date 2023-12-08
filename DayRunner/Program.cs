@@ -18,3 +18,6 @@ Day06.Runner.RunDay06();
 
 Console.WriteLine("Day 07");
 Day07.Runner.RunDay07();
+
+Console.WriteLine("Day 08");
+Day08.Runner.RunDay08();
