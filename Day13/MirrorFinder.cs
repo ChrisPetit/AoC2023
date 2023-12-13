@@ -15,13 +15,22 @@ public static class MirrorFinder
         }
         return result;
     }
-    
+
     public static long SummarizeReflectionLines(IEnumerable<char[,]> arrayList)
     {
-        return arrayList.Sum(FindAndFixSmudge);
-    }
+        var result = 0L;
+        foreach (var array in arrayList)
+        {
+            var verticalResult = FindVerticalMirrorSmudged(array);
+            if (verticalResult != -1) result += verticalResult;
 
+            var horizontalResult = FindHorizontalMirrorSmudged(array);
+            if (horizontalResult != -1) result += horizontalResult * 100;
+        }
+        return result;
+    }
     
+
     public static long FindVerticalMirrorLine(char[,] array)
     {
         var rows = array.GetLength(0);
@@ -44,7 +53,7 @@ public static class MirrorFinder
         }
         return -1; // No vertical mirror line found
     }
-    
+
     public static long FindHorizontalMirrorLine(char[,] array)
     {
         var rows = array.GetLength(0);
@@ -68,115 +77,68 @@ public static class MirrorFinder
         return -1; // No horizontal mirror line found
     }
 
-    public static void FlipCellState(char[,] array, int row, int col)
-    {
-        array[row, col] = array[row, col] == '#' ? '.' : '#';
-    }
-    
-    public static long FindAndFixSmudge(char[,] array)
-    {
-        var originalVerticalLine = FindVerticalMirrorLine(array);
-        var originalHorizontalLine = FindHorizontalMirrorLine(array);
 
-        for (var row = 0; row < array.GetLength(0); row++)
+    private static int FindVerticalMirrorSmudged(char[,] array)
+    {
+        var rows = array.GetLength(0);
+        var cols = array.GetLength(1);
+
+        for (var mirror = 1; mirror < cols; mirror++)
         {
-            for (var col = 0; col < array.GetLength(1); col++)
+            var smudges = 0;
+            var rightSide = cols - mirror;
+            var reflectionWidth = Math.Min(mirror, rightSide);
+
+            for (var d = 0; d < reflectionWidth && smudges <= 1; d++)
             {
-                FlipCellState(array, row, col);
-
-                var newVerticalLine = FindVerticalMirrorLine(array);
-                var newHorizontalLine = FindHorizontalMirrorLine(array);
-
-                // Check if a valid new line different from the original line is found
-                if ((newVerticalLine != -1 && newVerticalLine != originalVerticalLine) ||
-                    (newHorizontalLine != -1 && newHorizontalLine != originalHorizontalLine))
+                for (var row = 0; row < rows && smudges <= 1; row++)
                 {
-                    long result = (newVerticalLine != -1) ? newVerticalLine : newHorizontalLine * 100;
-                    FlipCellState(array, row, col); // Restore original state
-                    return result; // Return the new reflection line
-                }
-
-                FlipCellState(array, row, col); // Restore original state
-            }
-        }
-
-        return -1; // No new valid reflection line found
-    }
-
-
-    public static int FindHorizontalMirrorLineWithSmudge(char[,] array)
-    {
-        int rows = array.GetLength(0);
-        int cols = array.GetLength(1);
-
-        for (int mid = 1; mid <= rows / 2; mid++)
-        {
-            int discrepancyCount = 0;
-
-            for (int col = 0; col < cols; col++)
-            {
-                for (int row = 0; row < mid; row++)
-                {
-                    if (array[mid - row - 1, col] != array[mid + row, col])
+                    if (array[row, mirror - 1 - d] != array[row, mirror + d])
                     {
-                        discrepancyCount++;
-                        if (discrepancyCount > 1) break;
+                        smudges++;
                     }
                 }
-                if (discrepancyCount > 1) break;
             }
 
-            if (discrepancyCount == 1) return mid;
-        }
-        return -1; // No horizontal mirror line with smudge found
-    }
-    
-    public static int FindVerticalMirrorLineWithSmudge(char[,] array)
-    {
-        int rows = array.GetLength(0);
-        int cols = array.GetLength(1);
-
-        for (int mid = 1; mid <= cols / 2; mid++)
-        {
-            int discrepancyCount = 0;
-
-            for (int row = 0; row < rows; row++)
+            if (smudges == 1)
             {
-                for (int col = 0; col < mid; col++)
+                return mirror;
+            }
+        }
+
+        return 0;
+    }
+
+
+    private static int FindHorizontalMirrorSmudged(char[,] array)
+    {
+        var rows = array.GetLength(0);
+        var cols = array.GetLength(1);
+
+        for (var mirror = 1; mirror < rows; mirror++)
+        {
+            var smudges = 0;
+            var bottomSide = rows - mirror;
+            var reflectionHeight = Math.Min(mirror, bottomSide);
+
+            for (var d = 0; d < reflectionHeight && smudges <= 1; d++)
+            {
+                for (var col = 0; col < cols && smudges <= 1; col++)
                 {
-                    if (array[row, mid - col - 1] != array[row, mid + col])
+                    if (array[mirror - 1 - d, col] != array[mirror + d, col])
                     {
-                        discrepancyCount++;
-                        if (discrepancyCount > 1) break;
+                        smudges++;
                     }
                 }
-                if (discrepancyCount > 1) break;
             }
 
-            if (discrepancyCount == 1) return mid;
-        }
-        return -1; // No vertical mirror line with smudge found
-    }
-
-
-    public static long SummarizeReflectionLinesWithSmudges(List<char[,]> arrays)
-    {
-        long sum = 0;
-
-        foreach (var array in arrays)
-        {
-            int horizontalResult = FindHorizontalMirrorLineWithSmudge(array);
-            if (horizontalResult != -1)
-                sum += horizontalResult * 100;
-
-            int verticalResult = FindVerticalMirrorLineWithSmudge(array);
-            if (verticalResult != -1)
-                sum += verticalResult;
+            if (smudges == 1)
+            {
+                return mirror;
+            }
         }
 
-        return sum;
+        return 0;
     }
-
-
 
 }
