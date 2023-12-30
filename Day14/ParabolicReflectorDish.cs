@@ -4,7 +4,7 @@ using System.Linq;
 
 public class ParabolicReflectorDish
 {
-    private char[,] _platform;
+    private char[,]? _platform;
     private const char RoundedRock = 'O';
     private const char EmptySpace = '.';
     private readonly Dictionary<string, int> _memo;
@@ -23,18 +23,22 @@ public class ParabolicReflectorDish
     }
 
     private void InitializePlatform(IReadOnlyList<string> input)
-    {
-        var rows = input.Count;
-        var cols = input[0].Length;
-        _platform = new char[rows, cols];
-        for (var i = 0; i < rows; i++)
-        {
-            for (var j = 0; j < cols; j++)
-            {
-                _platform[i, j] = input[i][j];
-            }
-        }
-    }
+   {
+       var rows = input.Count; // get the total number of rows (equivalent to the number of strings in the list)
+       var cols = input[0].Length; // get the total number of columns (equivalent to the length of first string in the list)
+       _platform = new char[rows, cols]; // initialize the platform as a 2D char array
+   
+       // Iterate over each row
+       for (var i = 0; i < rows; i++)
+       {
+           // In each row, iterate over each column
+           for (var j = 0; j < cols; j++)
+           {
+               // Assign each input[i][j] value to the corresponding [_platform[i, j]] location
+               _platform[i, j] = input[i][j];
+           }
+       }
+   }
 
     public int CalculateLoadOnNorthBeams()
     {
@@ -47,7 +51,7 @@ public class ParabolicReflectorDish
         }
         
         var load = 0;
-        for (var i = 0; i < _platform.GetLength(0); i++)
+        for (var i = 0; i < _platform!.GetLength(0); i++)
         {
             for (var j = 0; j < _platform.GetLength(1); j++)
             {
@@ -68,20 +72,20 @@ public class ParabolicReflectorDish
 
     private void TiltPlatformNorth()
     {
-        for (var j = 0; j < _platform.GetLength(1); j++)
+        for (var column = 0; column < _platform!.GetLength(1); column++)
         {
-            for (var i = 1; i < _platform.GetLength(0); i++)
+            for (var row = 1; row < _platform.GetLength(0); row++)
             {
-                if (_platform[i, j] != RoundedRock) continue;
-                var targetRow = i;
-                while (targetRow > 0 && _platform[targetRow - 1, j] == EmptySpace)
+                if (_platform[row, column] != RoundedRock) continue;
+                var targetRow = row;
+                while (targetRow > 0 && _platform[targetRow - 1, column] == EmptySpace)
                 {
                     targetRow--;
                 }
 
-                if (targetRow == i) continue;
-                _platform[targetRow, j] = RoundedRock;
-                _platform[i, j] = EmptySpace;
+                if (targetRow == row) continue;
+                _platform[targetRow, column] = RoundedRock;
+                _platform[row, column] = EmptySpace;
             }
         }
         
@@ -96,65 +100,64 @@ public class ParabolicReflectorDish
 
    private void TiltPlatformWest()
     {
-        for (var i = 0; i < _platform.GetLength(0); i++)
+        for (var column = 0; column < _platform!.GetLength(0); column++)
         {
-            for (var j = 1; j < _platform.GetLength(1); j++)
+            for (var row = 1; row < _platform.GetLength(1); row++)
             {
-                if (_platform[i, j] != RoundedRock) continue;
-                var targetCol = j;
-                while (targetCol > 0 && _platform[i, targetCol - 1] == EmptySpace)
+                if (_platform[column, row] != RoundedRock) continue;
+                var targetCol = row;
+                while (targetCol > 0 && _platform[column, targetCol - 1] == EmptySpace)
                 {
                     targetCol--;
                 }
 
-                if (targetCol == j) continue;
-                _platform[i, targetCol] = RoundedRock;
-                _platform[i, j] = EmptySpace;
+                if (targetCol == row) continue;
+                _platform[column, targetCol] = RoundedRock;
+                _platform[column, row] = EmptySpace;
             }
         }
     }
     
     private void TiltPlatformSouth()
     {
-        for (var j = 0; j < _platform.GetLength(1); j++)
+        for (var column = 0; column < _platform!.GetLength(1); column++)
         {
-            for (var i = _platform.GetLength(0) - 2; i >= 0; i--)
+            for (var row = _platform.GetLength(0) - 2; row >= 0; row--)
             {
-                if (_platform[i, j] != RoundedRock) continue;
-                var targetRow = i;
-                while (targetRow < _platform.GetLength(0) - 1 && _platform[targetRow + 1, j] == EmptySpace)
+                if (_platform[row, column] != RoundedRock) continue;
+                var targetRow = row;
+                while (targetRow < _platform.GetLength(0) - 1 && _platform[targetRow + 1, column] == EmptySpace)
                 {
                     targetRow++;
                 }
 
-                if (targetRow == i) continue;
-                _platform[targetRow, j] = RoundedRock;
-                _platform[i, j] = EmptySpace;
+                if (targetRow == row) continue;
+                _platform[targetRow, column] = RoundedRock;
+                _platform[row, column] = EmptySpace;
             }
         }
     }
     
     private void TiltPlatformEast()
     {
-        for (var i = 0; i < _platform.GetLength(0); i++)
+        for (var column = 0; column < _platform!.GetLength(0); column++)
         {
-            for (var j = _platform.GetLength(1) - 2; j >= 0; j--)
+            for (var row = _platform.GetLength(1) - 2; row >= 0; row--)
             {
-                if (_platform[i, j] != RoundedRock) continue;
-                var targetCol = j;
-                while (targetCol < _platform.GetLength(1) - 1 && _platform[i, targetCol + 1] == EmptySpace)
+                if (_platform[column, row] != RoundedRock) continue;
+                var targetCol = row;
+                while (targetCol < _platform.GetLength(1) - 1 && _platform[column, targetCol + 1] == EmptySpace)
                 {
                     targetCol++;
                 }
 
-                if (targetCol == j) continue;
-                _platform[i, targetCol] = RoundedRock;
-                _platform[i, j] = EmptySpace;
+                if (targetCol == row) continue;
+                _platform[column, targetCol] = RoundedRock;
+                _platform[column, row] = EmptySpace;
             }
         }
     }
     
-    // Add a new method for performing many cycles
     public void PerformCycles(int numberOfCycles)
     {
         var currentCycle = 0;
@@ -167,7 +170,9 @@ public class ParabolicReflectorDish
             {
                 var cycleCollisionLength = currentCycle - cycleWithSameState;
 
-                // This will skip the cycles to the one before the next cycle where cycleCollisionLength would take place, essentially performing cycleCollisionLength cycles at once
+                // This will skip the cycles to the one before the next cycle where
+                // cycleCollisionLength would take place, essentially performing
+                // cycleCollisionLength cycles at once
                 var additionalCycles = (numberOfCycles - currentCycle) / cycleCollisionLength;
                 currentCycle += additionalCycles * cycleCollisionLength;
             }
@@ -179,6 +184,6 @@ public class ParabolicReflectorDish
     
     private string GetPlatformState()
     {
-        return string.Join("", _platform.Cast<char>());
+        return string.Join("", _platform!.Cast<char>());
     }
 }
