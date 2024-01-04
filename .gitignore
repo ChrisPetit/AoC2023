@@ -495,3 +495,5 @@ $RECYCLE.BIN/
 **/.idea/**/modules.xml
 [Pp]ackages/
 Desktop.ini
+
+**/input/*.txt
