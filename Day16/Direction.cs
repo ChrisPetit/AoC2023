@@ -1,6 +1,6 @@
 namespace Day16;
 
-internal enum Direction 
+public enum Direction 
 {
     Right,
     Down,

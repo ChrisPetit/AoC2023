@@ -8,5 +8,9 @@ public class Runner
         var contraption = new Contraption(input);
         var result = contraption.Energize();
         Console.WriteLine($"{result} tiles end up being energized");
+        var controlPanel = new ControlPanel(input);
+    
+        var maxNumberOfEnergizedTiles = controlPanel.FindMaxEnergizedTiles();
+        Console.WriteLine($"{maxNumberOfEnergizedTiles} is the largest number of energized tiles");
     }
 }

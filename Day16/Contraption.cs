@@ -20,6 +20,12 @@ public class Contraption()
         _contraption = ConvertStringArrayTo2DCharArray(input);
         _beams.Add(new Beam(-1, 0, Direction.Right));
     }
+
+    public Contraption(IReadOnlyList<string> input, Beam startBeam) : this()
+    {
+        _contraption = ConvertStringArrayTo2DCharArray(input);
+        _beams.Add(startBeam);
+    }
     
     public int Energize()
     {

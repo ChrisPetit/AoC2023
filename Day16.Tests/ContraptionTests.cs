@@ -6,8 +6,8 @@ public class ContraptionTests
     public void Test_Contraption_Energizes_Correct_Number_Of_Tiles() 
     {
         // Arrange
-        string[] input = new string[]
-        {
+        string[] input =
+        [
             ".|...\\....",
             "|.-.\\.....",
             ".....|-...",
@@ -18,7 +18,7 @@ public class ContraptionTests
             ".-.-/..|..",
             ".|....-|.\\",
             "..//.|...."
-        };
+        ];
         var contraption = new Contraption(input);
 
         // Act

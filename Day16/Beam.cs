@@ -1,16 +1,8 @@
 namespace Day16;
 
-internal class Beam
+public class Beam(int x, int y, Direction direction)
 {
-    public int X { get; set; }
-    public int Y { get; set; }
-    public Direction Direction { get; set; }
-
-    public Beam(int x, int y, Direction direction)
-    {
-        X = x;
-        Y = y;
-        Direction = direction;
-
-    }
+    public int X { get; set; } = x;
+    public int Y { get; set; } = y;
+    public Direction Direction { get; set; } = direction;
 }
