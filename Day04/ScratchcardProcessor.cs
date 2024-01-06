@@ -7,6 +7,8 @@ public static class ScratchcardProcessor
     {
         var processedCardsCount = 0;
         var cardsToProcess = new Queue<int>(); // Queue for cards to be processed
+        
+        var matchesCache = new Dictionary<int, int>(); // Cache to store match counts
 
         // Initial queueing of all cards
         for (var i = 0; i < cards.Count; i++)
@@ -20,10 +22,15 @@ public static class ScratchcardProcessor
             processedCardsCount++;
 
             var currentCard = cards[currentIndex];
-            var matches = currentCard.winningNumbers.Count(x => currentCard.playerNumbers.Contains(x));
+            //var matches = currentCard.winningNumbers.Count(x => currentCard.playerNumbers.Contains(x));
+            if (!matchesCache.TryGetValue(currentIndex, out var value)) // If not in cache, calculate matches
+            {
+                value = currentCard.winningNumbers.Count(x => currentCard.playerNumbers.Contains(x));
+                matchesCache[currentIndex] = value;
+            }
             
             // Queue additional cards based on matches
-            EnqueueBasedOnMatches(cards, currentIndex, matches, cardsToProcess);
+            EnqueueBasedOnMatches(cards, currentIndex, value, cardsToProcess);
         }
 
         return processedCardsCount;
