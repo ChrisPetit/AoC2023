@@ -1,158 +1,148 @@
 ﻿namespace Day17;
 
-public class PathFinder()
+public class PathFinder
 {
-    private Node[,] _nodes = null!;
-    private Node _startNode;
-    private Node _goalNode;
+    private readonly Node?[,] _grid;
+    private readonly Node? _startNode;
+    private readonly Node? _goalNode;
+    private readonly int _gridSize;
 
-
-    public PathFinder(IReadOnlyList<string> input) : this()
+    public PathFinder(IReadOnlyList<string> input)
     {
-        InitializeNodes(input);
-        _startNode = _nodes[0, 0];
-        _goalNode = _nodes[_nodes.GetLength(0) - 1, _nodes.GetLength(1) - 1];
+        _grid = InitializeGrid(input, out _startNode, out _goalNode, out _gridSize);
     }
 
-    private List<Node> GetNeighbours(Node node, Node previousNode)
+    private static Node?[,] InitializeGrid(IReadOnlyList<string> input, out Node? startNode, out Node? goalNode, out int gridSize)
     {
-        // Implement logic to get valid neighbors considering turning restrictions
-        // and no reversing rule.
-        var directions = new List<(int dx, int dy)>
+        if (input == null || input.Count == 0)
+            throw new ArgumentException("Input cannot be null or empty.", nameof(input));
+
+        gridSize = input.Count;
+        Node?[,] grid = new Node[gridSize, gridSize];
+
+        for (var y = 0; y < gridSize; y++)
         {
-            (0, 1), // Down
-            (1, 0), // Right
-            (0, -1), // Up
-            (-1, 0) // Left
+            for (var x = 0; x < gridSize; x++)
+            {
+                if (!char.IsDigit(input[y][x]))
+                    throw new FormatException("Input contains non-numeric character.");
+
+                grid[x, y] = new Node { X = x, Y = y, HeatLoss = input[y][x] - '0' };
+            }
+        }
+
+        startNode = grid[0, 0];
+        goalNode = grid[gridSize - 1, gridSize - 1];
+        return grid;
+    }
+
+    private List<Node?> GetNeighbours(Node? node)
+    {
+        var neighbours = new List<Node?>();
+        var directions = new List<(int x, int y, Direction dir)>
+        {
+            (0, -1, Direction.Up), // Up
+            (0, 1, Direction.Down), // Down
+            (-1, 0, Direction.Left), // Left
+            (1, 0, Direction.Right) // Right
         };
 
-        return (from direction in directions
-            let dx = direction.dx
-            let dy = direction.dy
-            let newX = node.X + dx
-            let newY = node.Y + dy
-            where newX >= 0 && newX < _nodes.GetLength(0) && newY >= 0 && newY < _nodes.GetLength(1)
-            select _nodes[newX, newY]
-            into neighbour
-            where neighbour != previousNode && neighbour.Value != 0
-            select neighbour).ToList();
-    }
-
-    private int CalculateHeuristic(Node node)
-    {
-        // Use Manhattan distance with adjustments for turning restrictions
-        var dx = Math.Abs(node.X - _goalNode.X);
-        var dy = Math.Abs(node.Y - _goalNode.Y);
-        var turningCost = 0;
-        var parentNode = node.Parent;
-        if(parentNode != null)
+        foreach (var (dx, dy, dir) in directions)
         {
-            var grandParentNode = parentNode.Parent;
-            if(grandParentNode != null)
-            {
-                turningCost = ((node.X - parentNode.X) * (parentNode.X - grandParentNode.X) +(node.Y - parentNode.Y) * (parentNode.Y - grandParentNode.Y) != 0) ?
-                    2 : 0;
-            }
+            var newX = node!.X + dx;
+            var newY = node.Y + dy;
+            var canMoveInDirection = CanMoveInDirection(node, dir);
+
+            if (newX < 0 || newX >= _gridSize || newY < 0 || newY >= _gridSize || !canMoveInDirection) continue;
+            var neighbour = _grid[newX, newY];
+            neighbour!.DirectionFromParent = dir;
+            neighbour.StepsInCurrentDirection = (node.DirectionFromParent == dir) ? node.StepsInCurrentDirection + 1 : 1;
+            neighbours.Add(neighbour);
         }
-        var heuristic = dx + dy + turningCost;
-        return heuristic;
+
+        return neighbours;
     }
 
-    private List<Node>? FindPath()
+    
+    private static bool CanMoveInDirection(Node? node, Direction newDirection)
     {
-        // OpenSet is a SortedSet of nodes to be evaluated, start by adding the start node
-        var openSet =
-            new SortedSet<Node>(Comparer<Node>
-                    .Create((x, y) => x.F != y.F ? x.F
-                        .CompareTo(y.F) : x.G
-                        .CompareTo(y.G)))
-                {_startNode};
+        if (node!.DirectionFromParent == Direction.None)
+            return true;
 
-        // Create a hashset for quick lookups
-        var openSetLookup = new HashSet<Node> { _startNode };
+        if (node.DirectionFromParent == newDirection)
+            return node.StepsInCurrentDirection <= 2;
 
-        // While there are still nodes to be evaluated
+        return node.DirectionFromParent != OppositeDirection(newDirection);
+    }
+
+    private static Direction OppositeDirection(Direction dir)
+    {
+        return dir switch
+        {
+            Direction.Up => Direction.Down,
+            Direction.Down => Direction.Up,
+            Direction.Left => Direction.Right,
+            Direction.Right => Direction.Left,
+            _ => Direction.None
+        };
+    }
+
+    private int CalculateHeuristic(Node? node)
+    {
+        // Manhattan distance as heuristic
+        return Math.Abs(node!.X - _goalNode!.X) + Math.Abs(node.Y - _goalNode.Y) - node.HeatLoss;
+    }
+
+    public List<Node?> FindPath()
+    {
+        var openSet = new List<Node?>();
+        var closedSet = new HashSet<Node?>();
+        _startNode!.G = 0;
+        _startNode.H = CalculateHeuristic(_startNode);
+        _startNode.DirectionFromParent = Direction.None;
+        _startNode.StepsInCurrentDirection = 0;
+        openSet.Add(_startNode);
+
         while (openSet.Count > 0)
         {
-            // Get the node in openSet having the lowest F score
-            var currentNode = openSet.Min;
-
-            // If currentNode is the goal node, then we reached the end
+            var currentNode = openSet.OrderBy(node => node!.F).First();
             if (currentNode == _goalNode)
             {
-                // Construct the path from goal to start
-                var path = new List<Node>();
-                while (currentNode != null)
+                return ReconstructPath(currentNode);
+            }
+
+            openSet.Remove(currentNode);
+            closedSet.Add(currentNode);
+
+            foreach (var neighbour in GetNeighbours(currentNode))
+            {
+                if (closedSet.Contains(neighbour))
                 {
-                    path.Insert(0, currentNode);
-                    currentNode = currentNode.Parent;
+                    continue;
                 }
 
-                return path;
-            }
+                var tentativeGScore = currentNode!.G + neighbour!.HeatLoss;
+                if (!openSet.Contains(neighbour)) openSet.Add(neighbour);
+                else if (tentativeGScore >= neighbour.G) continue;
 
-            // Else, continue the search
-            openSet.Remove(currentNode);
-
-            // Generate all the successors
-            foreach (var neighbour in GetNeighbours(currentNode, currentNode.Parent))
-            {
-                // Calculate new G cost for the neighbour
-                var tentativeGCost = currentNode.G + neighbour.Value;
-
-                // If this path to neighbour is better than what was previously calculated
-                if (openSetLookup.Contains(neighbour) && tentativeGCost >= neighbour.G) continue;
                 neighbour.Parent = currentNode;
-                neighbour.G = tentativeGCost;
+                neighbour.G = tentativeGScore;
                 neighbour.H = CalculateHeuristic(neighbour);
-
-                // If this neighbour is not in openSet, add it
-                if (openSetLookup.Contains(neighbour)) continue;
-                openSet.Add(neighbour);
-                openSetLookup.Add(neighbour);
             }
         }
 
-        return null; // If there's no possible path
+        throw new Exception("Path not found");
     }
 
-    public int CalculateHeat()
+    private static List<Node?> ReconstructPath(Node? currentNode)
     {
-        // Calculate the heat by summing up the values of all nodes in the path
-        int heat = 0;
-        foreach (var node in FindPath())
+        var path = new List<Node?>();
+        while (currentNode != null)
         {
-            heat += node.Value;
+            path.Add(currentNode);
+            currentNode = currentNode.Parent;
         }
-        return heat;
+        path.Reverse();
+        return path;
     }
-
-    private void InitializeNodes(IReadOnlyList<string> input)
-    {
-        // Initialize the nodes array width and height based on the input
-        var width = input[0].Length;
-        var height = input.Count;
-        _nodes = new Node[width, height];
-
-        // Iterate and fill up the values for each node
-        for (var i = 0; i < height; i++)
-        {
-            for (var j = 0; j < width; j++)
-            {
-                var value = input[i][j] - '0'; // assuming values are digits in the input strings
-                _nodes[j, i] = new Node(j, i, value);
-            }
-        }
-    }
-}
-
-public class Node(int x, int y, int value)
-{
-    public int X { get; set; } = x;
-    public int Y { get; set; } = y;
-    public int Value { get; set; } = value;// Node value
-    public int G { get; set; } // Cost to reach this node
-    public int H { get; set; } // Heuristic cost from this node to goal
-    public int F => G + H; // Total cost
-    public Node Parent { get; set; }
 }

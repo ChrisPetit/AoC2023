@@ -23,10 +23,11 @@ public class PathFinderTests
         };
         
         var pathFinder = new PathFinder(input);
-        var heatLoss = pathFinder.CalculateHeat();
+        var path = pathFinder.FindPath();
+        var totalHeatLoss = path.Sum(n =>n!.HeatLoss);
         
 
-        Assert.Equal(102, heatLoss);
+        Assert.Equal(102, totalHeatLoss);
     }
 }
 

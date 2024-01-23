@@ -45,3 +45,6 @@ Day15.Runner.RunDay15();
 
 Console.WriteLine("Day 16");
 Day16.Runner.RunDay16();
+
+Console.WriteLine("Day 17");
+Day17.Runner.RunDay17();
