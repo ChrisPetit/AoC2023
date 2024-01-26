@@ -28,6 +28,21 @@ public class PathFinderTests
         
 
         Assert.Equal(102, totalHeatLoss);
+
+        input = new[]
+        {
+            "11111",
+            "99991",
+            "99991",
+            "99991",
+            "99991"
+        };
+        
+        pathFinder = new PathFinder(input);
+        path = pathFinder.FindPath();
+        totalHeatLoss = path.Sum(n => n!.HeatLoss);
+        Assert.Equal(17, totalHeatLoss);
+
     }
 }
 
