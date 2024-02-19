@@ -1,157 +1,151 @@
 ﻿namespace Day17;
 
-public class PathFinder
+public class PathFinder(IReadOnlyList<string> input)
 {
-    private readonly Node?[,] _grid;
-    private readonly Node? _startNode;
-    private readonly Node? _goalNode;
-    private readonly int _gridWidth;
-    private readonly int _gridHeight;
-    private int _stepsInCurrentDirection;
-    private Direction _currentDirection;
+    private readonly int[,] _grid = InitializeGrid(input);
 
-    public PathFinder(IReadOnlyList<string> input)
+    private static int[,] InitializeGrid(IReadOnlyList<string> input)
     {
-        _grid = InitializeGrid(input, out _startNode, out _goalNode, out _gridWidth, out _gridHeight);
-        _stepsInCurrentDirection = 0;
-    }
+        var columns = input[0].Length;
+        var rows = input.Count;
+        var grid = new int[columns, rows];
 
-    private static Node?[,] InitializeGrid(IReadOnlyList<string> input, out Node? startNode, out Node? goalNode,
-        out int gridWidth, out int gridHeight)
-    {
-        if (input == null || input.Count == 0)
-            throw new ArgumentException("Input cannot be null or empty.", nameof(input));
-
-        gridHeight = input.Count;
-        gridWidth = input[0].Length; // assuming all strings have the same length
-
-        Node?[,] grid = new Node[gridWidth, gridHeight];
-
-        for (var y = 0; y < gridHeight; y++)
+        for (var row = 0; row < rows; row++)
         {
-            for (var x = 0; x < gridWidth; x++)
+            for (var column = 0; column < columns; column++)
             {
-                if (!char.IsDigit(input[y][x]))
-                    throw new FormatException("Input contains non-numeric character.");
-                grid[x, y] = new Node { X = x, Y = y, HeatLoss = input[y][x] - '0' };
+                if (int.TryParse(input[row][column].ToString(), out var number))
+                {
+                    grid[row, column] = number;
+                }
+                else
+                {
+                    throw new Exception($"Invalid number at position {row}, {column}");
+                }
             }
         }
 
-        startNode = grid[0, 0];
-        goalNode = grid[gridWidth - 1, gridHeight - 1];
         return grid;
     }
 
-    private List<Node?> GetNeighbours(Node? node)
+    public List<Node> FindPath()
     {
-        var neighbours = new List<Node?>();
-        var directions = new List<(int x, int y, Direction dir)>
+        var openList = new List<Node>();
+        var closedList = new List<Node>();
+        var startNode = new Node(0, 0, _grid[0, 0]);
+        startNode.G = CalculateG(startNode);
+        startNode.H = CalculateHeuristic(startNode);
+        
+        openList.Add(startNode);
+
+        while (openList.Count > 0)
         {
-            (0, -1, Direction.Up), // Up
-            (0, 1, Direction.Down), // Down
-            (-1, 0, Direction.Left), // Left
-            (1, 0, Direction.Right) // Right
-        };
+            var currentNode = openList.OrderBy(n => n.F).First();
+            openList.Remove(currentNode);
 
-        foreach (var (dx, dy, newDir) in directions)
-        {
-            var newX = node!.X + dx;
-            var newY = node.Y + dy;
-            var canMoveInDirection = CanMoveInDirection(node, newDir);
+            var neighbours = GetNeighbours(currentNode);
 
-            if (newX < 0 || newX >= _gridWidth || newY < 0 || newY >= _gridHeight || !canMoveInDirection) continue;
-            var neighbour = _grid[newX, newY];
-            _currentDirection = newDir;
-            _stepsInCurrentDirection = (_currentDirection == newDir) ? _stepsInCurrentDirection + 1 : 1;
-            neighbours.Add(neighbour);
-        }
-
-        return neighbours;
-    }
-
-    
-    private bool CanMoveInDirection(Node? node, Direction newDirection)
-    {
-        if (_currentDirection == Direction.None)
-            return true;
-
-        if (_currentDirection == newDirection)
-            return _stepsInCurrentDirection < 3;
-
-        return _currentDirection != OppositeDirection(newDirection);
-    }
-
-    private static Direction OppositeDirection(Direction dir)
-    {
-        return dir switch
-        {
-            Direction.Up => Direction.Down,
-            Direction.Down => Direction.Up,
-            Direction.Left => Direction.Right,
-            Direction.Right => Direction.Left,
-            _ => Direction.None
-        };
-    }
-
-    private int CalculateHeuristic(Node? node)
-    {
-        // Chebyshev distance as heuristic minus HeatLoss
-        return Math.Max(Math.Abs(node!.X - _goalNode!.X),
-                   Math.Abs(node.Y - _goalNode.Y)) -
-               node.HeatLoss;
-    }
-
-    public List<Node?> FindPath()
-    {
-        var queue = new List<Node?>();
-        var visited = new HashSet<Node?>();
-        _startNode!.G = 0;
-        _startNode.H = CalculateHeuristic(_startNode);
-        _startNode.DirectionFromParent = Direction.None;
-        _startNode.StepsInCurrentDirection = 0;
-        queue.Add(_startNode);
-
-        while (queue.Count > 0)
-        {
-            var currentNode = queue.OrderBy(node => node!.F).First();
-            if (currentNode!.X == _goalNode!.X && currentNode.Y == _goalNode.Y)
+            foreach (var neighbour in neighbours)
             {
-                return ReconstructPath(currentNode);
-            }
+                if (neighbour.Column == _grid.GetLength(0) - 1 && neighbour.Row == _grid.GetLength(1) - 1)
+                {
+                    return RetracePath(neighbour);
+                }
 
-            queue.Remove(currentNode);
-            visited.Add(currentNode);
-            
-            foreach (var neighbour in GetNeighbours(currentNode))
-            {
-                if (visited.Contains(neighbour))
+                if (openList.Any(n=>n.Row == neighbour.Row && n.Column == neighbour.Column && n.F < neighbour.F))
                 {
                     continue;
                 }
 
-                var tentativeGScore = currentNode.G + neighbour!.HeatLoss;
-                if (!queue.Contains(neighbour)) queue.Add(neighbour);
-                else if (tentativeGScore >= neighbour.G) continue;
-
-                neighbour.Parent = currentNode;
-                neighbour.G = tentativeGScore;
+                if (closedList.Any(n => n.Row == neighbour.Row && n.Column == neighbour.Column && n.F < neighbour.F))
+                {
+                    continue;
+                }
+                
                 neighbour.H = CalculateHeuristic(neighbour);
-
+                neighbour.G = CalculateG(neighbour);
+                openList.Add(neighbour);
+                
             }
+            closedList.Add(currentNode);
         }
 
-        throw new Exception("Path not found");
+        throw new Exception("no path found");
     }
 
-    private static List<Node?> ReconstructPath(Node? currentNode)
+    private static List<Node> RetracePath(Node node)
     {
-        var path = new List<Node?>();
+        var path = new List<Node>();
+        var currentNode = node;
+
+        // go backwards from end to start
         while (currentNode != null)
         {
             path.Add(currentNode);
             currentNode = currentNode.Parent;
         }
+
+        // reverse so that path goes from start to end
         path.Reverse();
+
         return path;
+    }
+
+    private List<Node> GetNeighbours(Node node)
+    {
+        var neighbours = new List<Node>();
+            
+        //Get the size of the grid
+        var maxColumn = _grid.GetLength(0);
+        var maxRow = _grid.GetLength(1);
+
+        //Movements to up, down, left and right (in that order)
+        var directions = new[]
+        {
+            new { Row = -1, Col = 0, Id = 'U' },
+            new { Row = 1, Col = 0, Id = 'D' },
+            new { Row = 0, Col = -1, Id = 'L' },
+            new { Row = 0, Col = 1, Id = 'R' }
+        };
+        for (var i = 0; i < 4; i++)
+        {
+            var newRow = node.Row + directions[i].Row;
+            var newColumn = node.Column + directions[i].Col;
+            //Ensure that the node is within the grid
+            if (newRow < 0 || newRow >= maxRow || newColumn < 0 || newColumn >= maxColumn) continue;
+            //Check if the new move is a step backwards or more than 3 steps in the same direction
+            if (node.PreviousDirection == directions[i].Id || node.ConsecutiveSteps > 3) continue;
+            var newNode = new Node(newColumn, newRow, _grid[newRow, newColumn])
+            {
+                Parent = node,
+                PreviousDirection = directions[i].Id,
+                ConsecutiveSteps = node.PreviousDirection == directions[i].Id ? node.ConsecutiveSteps + 1 : 1
+            };
+            neighbours.Add(newNode);
+        }
+        return neighbours;
+    }
+
+    private static int CalculateG(Node node)
+    {
+        if (node.Parent == null)
+        {
+            // if the node has no parent, it is the starting position, cost is 0
+            return 0;
+        }
+        // add the cost of the parent node to the cost of this step (1) and the HeatLoss of this node
+        return node.Parent.G + 1 + node.HeatLoss;
+    }
+    
+    private int CalculateHeuristic(Node node)
+    {
+        // Assuming our end goal is at the bottom right of the grid
+        var goalColumn = _grid.GetLength(0) - 1;
+        var goalRow = _grid.GetLength(1) - 1;
+    
+        // Manhattan distance
+        var heuristic = Math.Abs(node.Column - goalColumn) + Math.Abs(node.Row - goalRow) + node.HeatLoss; 
+
+        return heuristic;
     }
 }
