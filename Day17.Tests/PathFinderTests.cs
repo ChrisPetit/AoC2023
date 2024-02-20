@@ -21,28 +21,13 @@ public class PathFinderTests
             "2546548887735",
             "4322674655533"
         };
-        
         var pathFinder = new PathFinder(input);
-        var path = pathFinder.FindPath();
-        var totalHeatLoss = path.Sum(n =>n!.HeatLoss);
+        var heatLoss = pathFinder.MinHeatLossPath();
+        Assert.Equal(102, heatLoss);
         
-
-        Assert.Equal(102, totalHeatLoss);
-
-        input = new[]
-        {
-            "11111",
-            "99991",
-            "99991",
-            "99991",
-            "99991"
-        };
-        
-        pathFinder = new PathFinder(input);
-        path = pathFinder.FindPath();
-        totalHeatLoss = path.Sum(n => n!.HeatLoss);
-        Assert.Equal(17, totalHeatLoss);
-
+        pathFinder = new PathFinder(input, true);
+        heatLoss = pathFinder.MinHeatLossPath();
+        Assert.Equal(94, heatLoss);
     }
 }
 

@@ -6,8 +6,11 @@ public static class Runner
     {
         var input = File.ReadAllLines("input/Day17.txt");
         var pathFinder = new PathFinder(input);
-        var path = pathFinder.FindPath();
-        var totalHeatLoss = path.Sum(n =>n!.HeatLoss);
-        Console.WriteLine($"The heat loss is {totalHeatLoss}");
+        var heatLoss = pathFinder.MinHeatLossPath();
+        Console.WriteLine($"The heat loss is {heatLoss}");
+
+        pathFinder = new PathFinder(input, true);
+        heatLoss = pathFinder.MinHeatLossPath();
+        Console.WriteLine($"The heat loss is {heatLoss}");
     }
 }

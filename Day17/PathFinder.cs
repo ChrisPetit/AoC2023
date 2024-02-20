@@ -1,151 +1,155 @@
 ﻿namespace Day17;
 
-public class PathFinder(IReadOnlyList<string> input)
+public class PathFinder
 {
-    private readonly int[,] _grid = InitializeGrid(input);
+    private readonly int[][] _grid;
+    private readonly int _width;
+    private readonly int _height;
+    private readonly bool _part2;
+    
+    private const int MaxCountPart1 = 3;
+    private const int MaxCountPart2 = 10;
 
-    private static int[,] InitializeGrid(IReadOnlyList<string> input)
+    public PathFinder(IEnumerable<string> input, bool part2 = false)
     {
-        var columns = input[0].Length;
-        var rows = input.Count;
-        var grid = new int[columns, rows];
+        _grid = input.Select(line => line.Trim().Select(c => int.Parse("" + c)).ToArray()).ToArray();
+        _width = _grid[0].Length;
+        _height = _grid.Length;
+        _part2 = part2;
+    }
+    
+    public int MinHeatLossPath()
+    {
+        var start = new Neighbour { Position = Node.Zero, Previous = Node.Zero, Count = 0 };
+        var target = new Node(_width - 1, _height - 1);
 
-        for (var row = 0; row < rows; row++)
+        var open = new PriorityQueue<Neighbour, int>();
+        open.Enqueue(start, 0);
+
+        var cameFrom = new Dictionary<Neighbour, Neighbour>();
+
+        var gScore = new Dictionary<Neighbour, int>();
+        var fScore = new Dictionary<Neighbour, int>();
+
+        gScore[start] = 0;
+        fScore[start] = Heuristic(start, target);
+
+        while (open.Count > 0)
         {
-            for (var column = 0; column < columns; column++)
+            var current = open.Dequeue();
+            if (current.Position == target)
             {
-                if (int.TryParse(input[row][column].ToString(), out var number))
-                {
-                    grid[row, column] = number;
-                }
-                else
-                {
-                    throw new Exception($"Invalid number at position {row}, {column}");
-                }
+                var path = ReconstructPath(cameFrom, current);
+                return path.Sum(s => _grid[s.Position.Y][s.Position.X]) - _grid[0][0];
             }
-        }
 
-        return grid;
-    }
 
-    public List<Node> FindPath()
-    {
-        var openList = new List<Node>();
-        var closedList = new List<Node>();
-        var startNode = new Node(0, 0, _grid[0, 0]);
-        startNode.G = CalculateG(startNode);
-        startNode.H = CalculateHeuristic(startNode);
-        
-        openList.Add(startNode);
-
-        while (openList.Count > 0)
-        {
-            var currentNode = openList.OrderBy(n => n.F).First();
-            openList.Remove(currentNode);
-
-            var neighbours = GetNeighbours(currentNode);
-
-            foreach (var neighbour in neighbours)
-            {
-                if (neighbour.Column == _grid.GetLength(0) - 1 && neighbour.Row == _grid.GetLength(1) - 1)
-                {
-                    return RetracePath(neighbour);
-                }
-
-                if (openList.Any(n=>n.Row == neighbour.Row && n.Column == neighbour.Column && n.F < neighbour.F))
-                {
-                    continue;
-                }
-
-                if (closedList.Any(n => n.Row == neighbour.Row && n.Column == neighbour.Column && n.F < neighbour.F))
-                {
-                    continue;
-                }
-                
-                neighbour.H = CalculateHeuristic(neighbour);
-                neighbour.G = CalculateG(neighbour);
-                openList.Add(neighbour);
-                
-            }
-            closedList.Add(currentNode);
-        }
-
-        throw new Exception("no path found");
-    }
-
-    private static List<Node> RetracePath(Node node)
-    {
-        var path = new List<Node>();
-        var currentNode = node;
-
-        // go backwards from end to start
-        while (currentNode != null)
-        {
-            path.Add(currentNode);
-            currentNode = currentNode.Parent;
-        }
-
-        // reverse so that path goes from start to end
-        path.Reverse();
-
-        return path;
-    }
-
-    private List<Node> GetNeighbours(Node node)
-    {
-        var neighbours = new List<Node>();
+            var neighbours = _part2 ? GetNeighboursPart2(current) : GetNeighboursPart1(current);
             
-        //Get the size of the grid
-        var maxColumn = _grid.GetLength(0);
-        var maxRow = _grid.GetLength(1);
-
-        //Movements to up, down, left and right (in that order)
-        var directions = new[]
-        {
-            new { Row = -1, Col = 0, Id = 'U' },
-            new { Row = 1, Col = 0, Id = 'D' },
-            new { Row = 0, Col = -1, Id = 'L' },
-            new { Row = 0, Col = 1, Id = 'R' }
-        };
-        for (var i = 0; i < 4; i++)
-        {
-            var newRow = node.Row + directions[i].Row;
-            var newColumn = node.Column + directions[i].Col;
-            //Ensure that the node is within the grid
-            if (newRow < 0 || newRow >= maxRow || newColumn < 0 || newColumn >= maxColumn) continue;
-            //Check if the new move is a step backwards or more than 3 steps in the same direction
-            if (node.PreviousDirection == directions[i].Id || node.ConsecutiveSteps > 3) continue;
-            var newNode = new Node(newColumn, newRow, _grid[newRow, newColumn])
+            foreach (var neighbor in neighbours)
             {
-                Parent = node,
-                PreviousDirection = directions[i].Id,
-                ConsecutiveSteps = node.PreviousDirection == directions[i].Id ? node.ConsecutiveSteps + 1 : 1
-            };
-            neighbours.Add(newNode);
+                var tentativeGScore = gScore[current] + _grid[neighbor.Position.Y][neighbor.Position.X];
+                var neighborGScore = gScore.GetValueOrDefault(neighbor, int.MaxValue);
+                if (tentativeGScore >= neighborGScore) continue;
+                cameFrom[neighbor] = current;
+                gScore[neighbor] = tentativeGScore;
+                fScore[neighbor] = tentativeGScore + Heuristic(neighbor, target);
+                if (!open.UnorderedItems.Any(s => s.Element.Equals(neighbor)))
+                {
+                    open.Enqueue(neighbor, fScore[neighbor]);
+                }
+            }
         }
-        return neighbours;
-    }
+        throw new Exception("No path found");
 
-    private static int CalculateG(Node node)
-    {
-        if (node.Parent == null)
+        IEnumerable<Neighbour> ReconstructPath(IReadOnlyDictionary<Neighbour, Neighbour> cameFromNode, Neighbour current)
         {
-            // if the node has no parent, it is the starting position, cost is 0
-            return 0;
+            var totalPath = new List<Neighbour> { current };
+            while (cameFromNode.ContainsKey(current))
+            {
+                current = cameFromNode[current];
+                totalPath.Add(current);
+            }
+            totalPath.Reverse();
+            return totalPath;
         }
-        // add the cost of the parent node to the cost of this step (1) and the HeatLoss of this node
-        return node.Parent.G + 1 + node.HeatLoss;
+
+        int Heuristic(Neighbour step, Node targetNode)
+        {
+            // return 1;
+            return step.Position.Manhattan(targetNode);
+        }
     }
     
-    private int CalculateHeuristic(Node node)
+    private bool IsNodeWithinGrid(Node p)
     {
-        // Assuming our end goal is at the bottom right of the grid
-        var goalColumn = _grid.GetLength(0) - 1;
-        var goalRow = _grid.GetLength(1) - 1;
-    
-        // Manhattan distance
-        var heuristic = Math.Abs(node.Column - goalColumn) + Math.Abs(node.Row - goalRow) + node.HeatLoss; 
+        return p.X >= 0 && p.X < _width && p.Y >= 0 && p.Y < _height;
+    }
 
-        return heuristic;
+    private IEnumerable<Neighbour> GetNeighboursPart1(Neighbour node)
+    {
+        return new[] { node.Position.Up, node.Position.Right, node.Position.Down, node.Position.Left }
+            .Where(IsNodeWithinGrid)
+            .Where(p => p.X >= 0 && p.X < _width && p.Y >= 0 && p.Y < _height).Where(p => p != node.Previous)
+            .Select(p => new Neighbour { Position = p, Previous = node.Position, Count = GetCount(p) })
+            .Where(s => s.Count <= MaxCountPart1);
+
+        int GetCount(Node pos)
+        {
+            return pos.X == node.Previous.X || pos.Y == node.Previous.Y ? node.Count + 1 : 1;
+        }
+    }
+
+    private IEnumerable<Neighbour> GetNeighboursPart2(Neighbour node)
+    {
+
+
+        return node.Count switch
+        {
+            0 => new[] { node.Position.Up, node.Position.Right, node.Position.Down, node.Position.Left }
+                .Where(p => p.X >= 0 && p.X < _width && p.Y >= 0 && p.Y < _height)
+                .Select(p => new Neighbour { Position = p, Previous = node.Position, Count = 1 }),
+            < 4 => new[] { node.Position + (node.Position - node.Previous) }
+                .Where(p => p.X >= 0 && p.X < _width && p.Y >= 0 && p.Y < _height)
+                .Select(p => new Neighbour { Position = p, Previous = node.Position, Count = node.Count + 1 }),
+            _ => new[] { node.Position.Up, node.Position.Right, node.Position.Down, node.Position.Left }
+                .Where(IsNodeWithinGrid)
+                .Where(p => p.X >= 0 && p.X < _width && p.Y >= 0 && p.Y < _height)
+                .Where(p => p != node.Previous)
+                .Select(p => new Neighbour { Position = p, Previous = node.Position, Count = GetCount(p) })
+                .Where(s => s.Count <= MaxCountPart2)
+        };
+
+        int GetCount(Node pos)
+        {
+            return pos.X == node.Previous.X || pos.Y == node.Previous.Y ? node.Count + 1 : 1;
+        }
+    }
+
+    private struct Neighbour
+    {
+        public Node Position;
+        public Node Previous;
+        public int Count;
+    }
+    
+    public record Node(int X, int Y)
+    {
+        public static Node Zero => new(0, 0);
+
+        public Node Left => new(X - 1, Y);
+        public Node Right => new(X + 1, Y);
+        public Node Up => new(X, Y - 1);
+        public Node Down => new(X, Y + 1);
+
+        public IEnumerable<Node> Adjacent => new[] { Up, Right, Down, Left };
+
+        public static Node operator +(Node a, Node b) => new(a.X + b.X, a.Y + b.Y);
+        public static Node operator -(Node a, Node b) => new(a.X - b.X, a.Y - b.Y);
+
+        public int Manhattan(Node other) => Math.Abs(X - other.X) + Math.Abs(Y - other.Y);
+
+        public override string ToString() => $"({X}, {Y})";
+
     }
 }
